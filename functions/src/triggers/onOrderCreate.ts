@@ -1,6 +1,13 @@
 import { https, logger } from "firebase-functions";
 import stripe from "../lib/stripe";
 
+/**
+ * 1. Search Stripe if customer exists, if not create new customer
+ * 2. Create a new Invoice for the purchase with a due date of n days
+ * 3. Create new Invoice item and attach to above Invoice
+ * 4. Finalize and email the Invoice to customer
+ */
+
 export default https.onRequest(async (request, response) => {
   try {
     const { Email, Name, Price, order } = request.body;
@@ -38,7 +45,7 @@ export default https.onRequest(async (request, response) => {
 
     await stripe.invoiceItems.create({
       customer: customerID,
-      amount: +parseFloat(Price).toFixed(2) * 100,
+      amount: +(parseFloat(Price) * 100).toFixed(),
       currency: "USD",
       invoice: invoice.id,
       description: `Space Opera Order# ${order}`,

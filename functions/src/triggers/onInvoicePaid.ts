@@ -5,7 +5,12 @@ import wooApi from "../lib/wooCommerce";
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET_KEY!;
 
-export default https.onRequest((request, response) => {
+/**
+ * 1. Setup stripe webhook, verify signature on every request
+ * 2. When Invoice is paid, update woocommerce order status to ```complete```
+ */
+
+export default https.onRequest(async (request, response) => {
   try {
     const sig = request.headers["stripe-signature"];
     if (!sig) throw new Error("Invalid Stripe signature");
@@ -22,7 +27,7 @@ export default https.onRequest((request, response) => {
         if (!metadata?.order_id) throw new Error("Missing Woo order_id");
 
         logger.info("Invoice Paid event success");
-        wooApi.put("orders/" + metadata.order_id, {
+        await wooApi.put("orders/" + metadata.order_id, {
           status: "completed", // See more in https://woocommerce.github.io/woocommerce-rest-api-docs/#product-properties
         });
 
