@@ -36,7 +36,7 @@ export default https.onRequest(async (request, response) => {
     const invoice = await stripe.invoices.create({
       customer: customerID,
       collection_method: "send_invoice",
-      days_until_due: 30,
+      days_until_due: 3,
       auto_advance: false,
       metadata: { order_id: order },
     });
