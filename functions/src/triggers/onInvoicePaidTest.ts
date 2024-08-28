@@ -3,7 +3,7 @@ import Stripe from "stripe";
 import { EVENTS } from "../lib/stripe";
 
 const stripe = new Stripe(process.env.STRIPE_TEST_API_KEY!, {
-  apiVersion: "2022-08-01",
+  apiVersion: "2024-06-20",
 });
 
 const endpointSecret = process.env.STRIPE_TEST_WEBHOOK_SECRET_KEY!;
