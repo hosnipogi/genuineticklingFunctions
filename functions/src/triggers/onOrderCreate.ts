@@ -1,5 +1,13 @@
 import { https, logger } from "firebase-functions";
 import stripe from "../lib/stripe";
+import { z } from "zod";
+
+const bodySchema = z.object({
+  Email: z.string().email(),
+  Name: z.string().min(1),
+  Price: z.coerce.number(),
+  order: z.number(),
+});
 
 /**
  * 1. Search Stripe if customer exists, if not create new customer
@@ -10,10 +18,15 @@ import stripe from "../lib/stripe";
 
 export default https.onRequest(async (request, response) => {
   try {
-    const { Email, Name, Price, order } = request.body;
+    const DEADLINE = new Date("September 4, 2024").getTime();
+    if (Date.now() > DEADLINE) {
+      throw new Error("DEADLINE REACHED");
+    }
 
-    if (!Email || !Name || !Price || !order)
-      throw new Error("Check request body");
+    const body = bodySchema.parse(request.body);
+    const { Email, Name, Price, order } = body;
+
+    logger.info("New request received body: ", body);
 
     let customerID: string;
 
@@ -38,18 +51,23 @@ export default https.onRequest(async (request, response) => {
       collection_method: "send_invoice",
       days_until_due: 3,
       auto_advance: false,
+      currency: "EUR",
       metadata: { order_id: order },
     });
 
+    logger.info("Created Invoice", invoice);
+
     if (!invoice.id) throw new Error("Invoice creation failed");
 
-    await stripe.invoiceItems.create({
+    const item = await stripe.invoiceItems.create({
       customer: customerID,
-      amount: +(parseFloat(Price) * 100).toFixed(),
+      amount: Price * 100,
       currency: "EUR",
       invoice: invoice.id,
       description: `Space Opera Order# ${order}`,
     });
+
+    logger.info("Created Invoice Item", item);
 
     await stripe.invoices.sendInvoice(invoice.id);
 

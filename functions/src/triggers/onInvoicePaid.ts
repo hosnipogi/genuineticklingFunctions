@@ -12,6 +12,11 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET_KEY!;
 
 export default https.onRequest(async (request, response) => {
   try {
+    const DEADLINE = new Date("September 4, 2024").getTime();
+    if (Date.now() > DEADLINE) {
+      throw new Error("DEADLINE REACHED");
+    }
+
     const sig = request.headers["stripe-signature"];
     if (!sig) throw new Error("Invalid Stripe signature");
 
@@ -23,6 +28,11 @@ export default https.onRequest(async (request, response) => {
 
     switch (event.type) {
       case EVENTS.INVOICE_PAID: {
+        logger.info({
+          message: "New Stripe INVOICE Paid Event",
+          data: event.data,
+        });
+
         const { metadata } = event.data.object as Stripe.Invoice;
         if (!metadata?.order_id) throw new Error("Missing Woo order_id");
 
