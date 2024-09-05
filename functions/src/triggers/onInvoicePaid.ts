@@ -2,6 +2,7 @@ import { https, logger } from "firebase-functions";
 import type Stripe from "stripe";
 import stripe, { EVENTS } from "../lib/stripe";
 import wooApi from "../lib/wooCommerce";
+import { throwIfDeadlineReached } from "../lib/utils";
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET_KEY!;
 
@@ -12,10 +13,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET_KEY!;
 
 export default https.onRequest(async (request, response) => {
   try {
-    const DEADLINE = new Date("September 4, 2024").getTime();
-    if (Date.now() > DEADLINE) {
-      throw new Error("DEADLINE REACHED");
-    }
+    throwIfDeadlineReached();
 
     const sig = request.headers["stripe-signature"];
     if (!sig) throw new Error("Invalid Stripe signature");

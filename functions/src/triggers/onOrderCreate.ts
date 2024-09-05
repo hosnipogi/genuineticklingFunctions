@@ -1,11 +1,12 @@
 import { https, logger } from "firebase-functions";
 import stripe from "../lib/stripe";
 import { z } from "zod";
+import { throwIfDeadlineReached } from "../lib/utils";
 
 const bodySchema = z.object({
   Email: z.string().email(),
   Name: z.string().min(1),
-  Price: z.coerce.number(),
+  Price: z.coerce.number().transform((a) => +a.toFixed(2)),
   order: z.number(),
 });
 
@@ -18,10 +19,7 @@ const bodySchema = z.object({
 
 export default https.onRequest(async (request, response) => {
   try {
-    const DEADLINE = new Date("September 4, 2024").getTime();
-    if (Date.now() > DEADLINE) {
-      throw new Error("DEADLINE REACHED");
-    }
+    throwIfDeadlineReached();
 
     const body = bodySchema.parse(request.body);
     const { Email, Name, Price, order } = body;
@@ -51,7 +49,7 @@ export default https.onRequest(async (request, response) => {
       collection_method: "send_invoice",
       days_until_due: 3,
       auto_advance: false,
-      currency: "EUR",
+      currency: "USD",
       metadata: { order_id: order },
     });
 
@@ -62,7 +60,7 @@ export default https.onRequest(async (request, response) => {
     const item = await stripe.invoiceItems.create({
       customer: customerID,
       amount: Price * 100,
-      currency: "EUR",
+      currency: "USD",
       invoice: invoice.id,
       description: `Space Opera Order# ${order}`,
     });

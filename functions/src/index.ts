@@ -1,3 +1,3 @@
 import "dotenv/config";
 
-export { onOrderCreate, onInvoicePaid, onInvoicePaidTest } from "./triggers";
+export { onOrderCreate, onInvoicePaid } from "./triggers";
