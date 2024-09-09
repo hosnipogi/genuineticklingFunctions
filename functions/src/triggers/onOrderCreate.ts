@@ -59,7 +59,7 @@ export default https.onRequest(async (request, response) => {
 
     const item = await stripe.invoiceItems.create({
       customer: customerID,
-      amount: Price * 100,
+      amount: Math.round(Price * 100),
       currency: "USD",
       invoice: invoice.id,
       description: `Space Opera Order# ${order}`,
