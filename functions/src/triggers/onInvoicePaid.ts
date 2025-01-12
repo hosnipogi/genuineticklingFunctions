@@ -1,8 +1,7 @@
 import { https, logger } from "firebase-functions";
 import type Stripe from "stripe";
-import stripe, { EVENTS } from "../lib/stripe";
+import stripe from "../lib/stripe";
 import wooApi from "../lib/wooCommerce";
-import { throwIfDeadlineReached } from "../lib/utils";
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET_KEY!;
 
@@ -13,8 +12,6 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET_KEY!;
 
 export default https.onRequest(async (request, response) => {
   try {
-    throwIfDeadlineReached();
-
     const sig = request.headers["stripe-signature"];
     if (!sig) throw new Error("Invalid Stripe signature");
 
@@ -25,7 +22,7 @@ export default https.onRequest(async (request, response) => {
     );
 
     switch (event.type) {
-      case EVENTS.INVOICE_PAID: {
+      case "invoice.paid": {
         logger.info({
           message: "New Stripe INVOICE Paid Event",
           data: event.data,

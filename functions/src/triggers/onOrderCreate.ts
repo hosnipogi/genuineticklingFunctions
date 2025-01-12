@@ -1,7 +1,6 @@
 import { https, logger } from "firebase-functions";
 import stripe from "../lib/stripe";
 import { z } from "zod";
-import { throwIfDeadlineReached } from "../lib/utils";
 
 const bodySchema = z.object({
   Email: z.string().email(),
@@ -19,8 +18,6 @@ const bodySchema = z.object({
 
 export default https.onRequest(async (request, response) => {
   try {
-    throwIfDeadlineReached();
-
     const body = bodySchema.parse(request.body);
     const { Email, Name, Price, order } = body;
 
