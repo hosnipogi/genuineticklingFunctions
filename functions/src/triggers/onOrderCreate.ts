@@ -1,6 +1,9 @@
-import { https, logger } from "firebase-functions";
-import stripe from "../lib/stripe";
+import { https, logger } from "firebase-functions/v2";
 import { z } from "zod";
+import { StripeClient } from "../lib/stripe";
+import { defineString } from "firebase-functions/params";
+
+const stripeApiKey = defineString("STRIPE_API_KEY");
 
 const bodySchema = z.object({
   Email: z.string().email(),
@@ -24,6 +27,7 @@ export default https.onRequest(async (request, response) => {
     logger.info("New request received body: ", body);
 
     let customerID: string;
+    const stripe = new StripeClient(stripeApiKey.value());
 
     const customer = await stripe.customers.search({
       query: `email:"${Email}"`,

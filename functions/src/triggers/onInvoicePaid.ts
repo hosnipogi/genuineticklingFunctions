@@ -1,9 +1,13 @@
-import { https, logger } from "firebase-functions";
+import { https, logger } from "firebase-functions/v2";
 import type Stripe from "stripe";
-import stripe from "../lib/stripe";
-import wooApi from "../lib/wooCommerce";
+import { WooCommerce } from "../lib/wooCommerce";
+import { defineString } from "firebase-functions/params";
+import { StripeClient } from "../lib/stripe";
 
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET_KEY!;
+const stripeWebhookSecret = defineString("STRIPE_WEBHOOK_SECRET_KEY");
+const wooCommerceConsumerKey = defineString("WOO_COMMERCE_CONSUMER_KEY");
+const wooCommerceConsumerSecret = defineString("WOO_COMMERCE_CONSUMER_SECRET");
+const stripeApiKey = defineString("STRIPE_API_KEY");
 
 /**
  * 1. Setup stripe webhook, verify signature on every request
@@ -15,10 +19,16 @@ export default https.onRequest(async (request, response) => {
     const sig = request.headers["stripe-signature"];
     if (!sig) throw new Error("Invalid Stripe signature");
 
+    const stripe = new StripeClient(stripeApiKey.value());
+    const wooCommerce = new WooCommerce(
+      wooCommerceConsumerKey.value(),
+      wooCommerceConsumerSecret.value()
+    );
+
     const event = stripe.webhooks.constructEvent(
       request.rawBody,
       sig,
-      endpointSecret
+      stripeWebhookSecret.value()
     );
 
     switch (event.type) {
@@ -32,7 +42,8 @@ export default https.onRequest(async (request, response) => {
         if (!metadata?.order_id) throw new Error("Missing Woo order_id");
 
         logger.info("Invoice Paid event success");
-        await wooApi.put("orders/" + metadata.order_id, {
+
+        await wooCommerce.api.put("orders/" + metadata.order_id, {
           status: "completed", // See more in https://woocommerce.github.io/woocommerce-rest-api-docs/#product-properties
         });
 

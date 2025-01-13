@@ -1,8 +1,14 @@
 import WooCommerceRestApi from "@woocommerce/woocommerce-rest-api";
 
-export default new WooCommerceRestApi({
-  url: "https://genuinetickling.com",
-  consumerKey: process.env.WOO_COMMERCE_CONSUMER_KEY!,
-  consumerSecret: process.env.WOO_COMMERCE_CONSUMER_SECRET!,
-  version: "wc/v3",
-});
+export class WooCommerce {
+  public api: WooCommerceRestApi;
+
+  constructor(consumerKey: string, consumerSecret: string) {
+    this.api = new WooCommerceRestApi({
+      url: "https://genuinetickling.com",
+      consumerKey,
+      consumerSecret,
+      version: "wc/v3",
+    });
+  }
+}
